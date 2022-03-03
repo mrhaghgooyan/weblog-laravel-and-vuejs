@@ -392,7 +392,7 @@ php artisan serve
 
 I hope it was useful,
 Farid HaghGooyan
-20222-03-04
+2022-03-04
 
 
 [ Vue 2 ]: https://v2.vuejs.org/v2/guide/
