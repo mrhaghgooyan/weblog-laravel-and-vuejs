@@ -1,64 +1,130 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Weblog Single Page
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[ Vue 2 ] and [ Laravel 8 ] Used to have a blog and comment system.
 
-## About Laravel
+Step 1: Install fresh Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+```bash
+composer create-project laravel/laravel <your-project-name>
+```
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Step 2: Config .env file
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=dbname
+DB_USERNAME=username
+DB_PASSWORD=password
+```
+Step 3 : this is a shortcut for create Migration , Model and Controller
 
-## Learning Laravel
+```bash
+php artisan make:model Comment -mcr
+```
+Step 4: Now it's time for create a migration for Comment Table
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```bash
+public function up()
+    {
+        Schema::create('comments', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('parent_id')->unsigned()->nullable();
+            $table->string('name');
+            $table->string('comment');
+            $table->timestamps();
+            $table->foreign('parent_id')->references('id')->on('comments')->onDelete('cascade');
+        });
+    }
+    public function down()
+    {
+        Schema::create('comments', function (Blueprint $table) {
+            $table->dropForeign('comments_parent_id_foreign');
+        });
+        Schema::dropIfExists('comments');
+    }
+```
+===> Based on DB normalize version , we must create 2 Table and crate relations , But this method is practical.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Step 5: Run The Migration
+```bash
+php artisan migrate
+```
+Step 6: Setup Comment Model | Just fillable
+```bash
+protected $fillable = ['parent_id','name','comment'];
+```
+## Step 7 : Just One Query for Multi-level Comments
+Setup Comment Controller
+```bash
+public function index()
+    {
+        $all_comments = Comment::orderBy('id','desc')->get();
+        foreach ($all_comments as $comment){
+            if ($comment->parent_id == null){
+                $root_comment[] = $comment;
+            }
+        }
+        $comment = self::commentsTree($root_comment,$all_comments);
+        return response()->json($comment);
 
-## Laravel Sponsors
+    }
+    private static function commentsTree($root_comments,$all_comments){
+        foreach ($root_comments as $comment){
+            $comment->replies = $all_comments->where('parent_id', $comment->id);
+            foreach ($comment->replies as $reply){
+                $reply->replies = $all_comments->where('parent_id',$reply->id);
+            }
+        }
+        return $root_comments;
+    }
+```
+Step 8: Custom Routes
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+web.php
+```bash
+Route::get('{any}', function () {
+    return view('app');
+})->where('any', '.*');
+```
 
-### Premium Partners
+api.php
+```bash
+Route::resource('comment',App\Http\Controllers\CommentController::class)->only(['index','store','show','update','destroy']);
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+```
 
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+***
+## Say Hello To VUE and Dependencies
+Step 9: Laravel Vue UI
+```bash
+composer require laravel/ui
+```
+```bash
+php artisan ui vue
+```
+*** Note that !!!
+Pay attention to commands and versions to avoid the problem of overlapping versions
+```bash
+npm install vue@2.6.12
+```
+```bash
+npm install vue-axios@3.2.2
+```
+```bash
+npm install vue-router@3.4.9
+```
+```bash
+npm install
+```
+```bash
+npm run watch
+```
+[ Vue 2 ]: https://v2.vuejs.org/v2/guide/
+[ Laravel 8 ]: https://laravel.com/docs/8.x
+[Docsy user guide]: https://docsy.dev/docs
+[Docsy]: https://github.com/google/docsy
+[example.docsy.dev]: https://example.docsy.dev
+[Hugo theme]: https://www.mikedane.com/static-site-generators/hugo/installing-using-themes/
+[Netlify]: https://netlify.com
