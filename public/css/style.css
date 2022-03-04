@@ -1,0 +1,62 @@
+.comment{
+    padding: 10px;
+    margin: 10px;
+    border-radius: 15px;
+}
+.level1{
+    background-image: linear-gradient(to right, #00BF4A , white);
+}
+.level2{
+    margin-left: 20px;
+    border: 2px dashed #00BF4A;
+    position: relative;
+}
+.level2 a.btn{
+    color: gray!important;
+}
+.level3{
+    margin-left: 30px;
+    border: 2px dashed #00BF4A;
+    position: relative;
+}
+.comment > img{
+    border: 1px solid lightgray;
+    padding: 5px;
+}
+.level2::before , .level3::before{
+    content: "";
+    width: 3px;
+    height: 12px;
+    background-color: #00BF4A;
+    position: absolute;
+    display: block;
+    top: -12px;
+}
+.font-weight-bolder{
+    font-weight: 900;
+    font-family: Arial;
+    letter-spacing: -1px;
+}
+.media-body h5{
+    font-weight: 900;
+}
+.media-body p{
+    color: gray;
+}
+
+.level1 .media-body p{
+    color: white!important;
+
+}
+
+@media all and (max-width: 400px) {
+    .comment-wrapper .media{
+        margin-left: 0!important;
+    }
+    .ml-5, .mx-5 {
+        margin-left: 10px!important;
+    }
+    small{
+        display: none;
+    }
+}
